@@ -5,11 +5,9 @@
 namespace hero_chassis_controller{
 
 HeroChassisController::HeroChassisController()
-: cmds_(0),loop_count(0)  {}
+: cmds_(0),loop_count_(0),perimeter(0),WHEEL_DIAMETER(0) {}
 
-HeroChassisController::~HeroChassisController(){
-    sub_commond.shutdown();
-}
+HeroChassisController::~HeroChassisController()  {}
 
 bool HeroChassisController::init(hardware_interface::EffortJointInterface *effort_joint_interface,
                                   ros::NodeHandle &root_nh, ros::NodeHandle &controller_nh){
@@ -26,6 +24,30 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
     for(int i = 0; i < 4; i++)
         if (!pid_controller_[i].init(ros::NodeHandle(root_nh, "pid")))
             return false;
+    if (!root_nh.getParam("front_left_joint_/pid/p",p[0]));
+        return false;
+    if (!root_nh.getParam("front_left_joint_/pid/i",i[0]));
+        return false;
+    if (!root_nh.getParam("front_left_joint_/pid/d",d[0]));
+        return false;
+    if (!root_nh.getParam("front_right_joint_/pid/p",p[1]));
+        return false;
+    if (!root_nh.getParam("front_right_joint_/pid/i",i[1]));
+        return false;
+    if (!root_nh.getParam("front_right_joint_/pid/d",d[1]));
+        return false;
+    if (!root_nh.getParam("back_left_joint_/pid/p",p[2]));
+        return false;
+    if (!root_nh.getParam("back_left_joint_/pid/i",i[2]));
+        return false;
+    if (!root_nh.getParam("back_left_joint_/pid/d",d[2]));
+        return false;
+    if (!root_nh.getParam("back_right_joint_/pid/p",p[3]));
+        return false;
+    if (!root_nh.getParam("back_right_joint_/pid/i",i[3]));
+        return false;
+    if (!root_nh.getParam("back_right_joint_/pid/d",d[3]));
+        return false;
 
     controller_state_publisher_.reset(
     new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>
@@ -52,11 +74,11 @@ void HeroChassisController::printDebug(int &n){
   pid_controller_[n].printValues();
 }
 
-void HeroChassisController::setCommand(double cmd, int &n){
+void HeroChassisController::setCmd(double cmd, int &n){
   cmd_[n] = cmd;
 }
 
-/*void HeroChassisController::getCommand(double& cmd){
+/*void HeroChassisController::getCmd(double& cmd){
   //正运动学回推底盘速度
 }*/
 
@@ -67,7 +89,7 @@ void HeroChassisController::starting(const ros::Time& time){
   
 }
 
-void Kinematics_Init(void){
+void HeroChassisController::Kinematics_Init(){
     perimeter = (float)(WHEEL_DIAMETER*PI);
     
     _Float32 r_x = D_X/2;
@@ -75,10 +97,10 @@ void Kinematics_Init(void){
     xpy = (r_x + r_y);
 }
 
-void Kinematics_Inverse(_Float32 linear_x, _Float32 linear_y, _Float32 angular_z){
+void HeroChassisController::Kinematics_Inverse(_Float32 linear_x, _Float32 linear_y, _Float32 angular_z){
 	_Float32 v_tx   = linear_x;
 	_Float32 v_ty   = linear_y;
-	_Float32 omega = _Float32 angular_z;
+	_Float32 omega = angular_z;
 	v_w[4] = {0};
 	
 	v_w[0] = v_tx - v_ty - xpy*omega;
@@ -99,10 +121,10 @@ void HeroChassisController::update(const ros::Time& time, const ros::Duration& p
     error[3] = v_w[3] - back_right_joint_.getVelocity();
 
     double commanded_effort[4];
-    commanded_effort[0] = pid_controller_fl.computeCommand(error[0], period);
-    commanded_effort[1] = pid_controller_fr.computeCommand(error[1], period);
-    commanded_effort[2] = pid_controller_bl.computeCommand(error[2], period);
-    commanded_effort[3] = pid_controller_br.computeCommand(error[3], period);
+    commanded_effort[0] = pid_controller_[0].computeCommand(error[0], period);
+    commanded_effort[1] = pid_controller_[1].computeCommand(error[1], period);
+    commanded_effort[2] = pid_controller_[2].computeCommand(error[2], period);
+    commanded_effort[3] = pid_controller_[3].computeCommand(error[3], period);
 
     front_left_joint_.setCommand(commanded_effort[0]);
     front_right_joint_.setCommand(commanded_effort[1]);
@@ -110,5 +132,5 @@ void HeroChassisController::update(const ros::Time& time, const ros::Duration& p
     back_right_joint_.setCommand(commanded_effort[3]);
 }
 
-PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::SimpleChassisController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::HeroChassisController, controller_interface::ControllerBase)
 }

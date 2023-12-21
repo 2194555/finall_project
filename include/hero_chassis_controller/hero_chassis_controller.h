@@ -11,6 +11,7 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <ros/node_handle.h>
 #include <std_msgs/Float64.h>
+#include "geometry_msgs/Twist.h"
 
 namespace hero_chassis_controller{
 
@@ -22,21 +23,25 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 
     bool init(hardware_interface::EffortJointInterface *effort_joint_interface,ros::NodeHandle &root_nh, ros::NodeHandle &controller_nh) override;
 
-    void setCmd(double cmd);
+    void setCmd(double cmd, int &n);
 
-    void getCmd(double & cmd);
+    //void getCmd(double & cmd);
 
     void starting(const ros::Time& time) override;
 
     void update(const ros::Time &time, const ros::Duration &period) override;
 
-    void getGains(double &p, double &i, double &d, double &i_max, double &i_min);
+    void getGains(double &p, double &i, double &d, double &i_max, double &i_min, int &n);
 
-    void getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup);
+    void getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup, int &n);
 
-    void printDebug();
+    void printDebug(int &n);
 
-    void setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup = false);
+    void setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup = false, int &n);
+
+    void Kinematics_Init();
+
+    void Kinematics_Inverse(_Float32 linear_x, _Float32 linear_y, _Float32 angular_z);
 
     hardware_interface::JointHandle front_left_joint_, front_right_joint_, back_left_joint_, back_right_joint_;
 
@@ -45,7 +50,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
     private:
         int loop_count_;
 
-        _Float32 perimeter,xpy,v_w[4],D_X,D_Y,p,i,d;
+        _Float32 perimeter,xpy,v_w[4],D_X,D_Y,p[4],i[4],d[4],WHEEL_DIAMETER;
 
         ros::Time last_change_;
 
@@ -55,7 +60,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 
         ros::Subscriber sub_command_;
 
-        void setCmdCallback(const std_msgs::Float64ConstPtr& msg);
+        void setCmdCallback(geometry_msgs::Twist& cmd);
     };
 }
 
