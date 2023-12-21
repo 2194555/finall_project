@@ -43,7 +43,9 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
     double cmd_[4],cmds_;
     
     private:
-        int loop_count_,state_{};
+        int loop_count_;
+
+        _Float32 perimeter,xpy,v_w[4],D_X,D_Y;
 
         ros::Time last_change_;
 

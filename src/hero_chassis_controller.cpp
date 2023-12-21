@@ -5,7 +5,7 @@
 namespace hero_chassis_controller{
 
 HeroChassisController::HeroChassisController()
-: cmd_(0),loop_count(0)  {}
+: cmds_(0),loop_count(0)  {}
 
 HeroChassisController::~HeroChassisController(){
     sub_commond.shutdown();
