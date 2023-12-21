@@ -110,3 +110,6 @@ void HeroChassisController::update(const ros::Time& time, const ros::Duration& p
     back_left_joint_.setCommand(commanded_effort[2]);
     back_right_joint_.setCommand(commanded_effort[3]);
 }
+
+PLUGINLIB_EXPORT_CLASS(hero_chassis_controller::SimpleChassisController, controller_interface::ControllerBase)
+}
