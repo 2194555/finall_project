@@ -58,6 +58,7 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
         controller_state_publisher_[j]->msg_.p=p[j];
         controller_state_publisher_[j]->msg_.i=i[j];
         controller_state_publisher_[j]->msg_.d=d[j];
+        controller_state_publisher_[j]->msg_.i_clamp=I_MAX;
     }
 
     sub_command_ = root_nh.subscribe("cmd_vel", 1, &HeroChassisController::setCmdCallback, this);
@@ -83,9 +84,9 @@ void HeroChassisController::printDebug(int &n){
   pid_controller_[n].printValues();
 }
 
-void HeroChassisController::setCmd(double cmd, int &n){
+/*void HeroChassisController::setCmd(double cmd, int &n){
   cmd_[n] = cmd;
-}
+}*/
 
 /*void HeroChassisController::getCmd(double& cmd){
   //正运动学回推底盘速度
@@ -151,6 +152,7 @@ void HeroChassisController::update(const ros::Time& time, const ros::Duration& p
 
                 double dummy;
                 bool antiwindup;
+
                 getGains(controller_state_publisher_[n]->msg_.p,
                 controller_state_publisher_[n]->msg_.i,
                 controller_state_publisher_[n]->msg_.d,
