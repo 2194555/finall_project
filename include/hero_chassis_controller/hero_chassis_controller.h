@@ -43,7 +43,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 
     void Kinematics_Inverse(_Float32 linear_x, _Float32 linear_y, _Float32 angular_z);
 
-    hardware_interface::JointHandle front_left_joint_, front_right_joint_, back_left_joint_, back_right_joint_;
+    hardware_interface::JointHandle joint_[4];
 
     double cmd_[4],cmds_;
     
@@ -56,7 +56,7 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
 
         control_toolbox::Pid pid_controller_[4];
 
-        std::unique_ptr<realtime_tools::RealtimePublisher<control_msgs::JointControllerState> > controller_state_publisher_ ;
+        std::unique_ptr<realtime_tools::RealtimePublisher<control_msgs::JointControllerState> > controller_state_publisher_[4] ;
 
         ros::Subscriber sub_command_;
 
