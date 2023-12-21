@@ -45,11 +45,11 @@ class HeroChassisController : public controller_interface::Controller<hardware_i
     private:
         int loop_count_;
 
-        _Float32 perimeter,xpy,v_w[4],D_X,D_Y;
+        _Float32 perimeter,xpy,v_w[4],D_X,D_Y,p,i,d;
 
         ros::Time last_change_;
 
-        control_toolbox::Pid pid_controller_;
+        control_toolbox::Pid pid_controller_[4];
 
         std::unique_ptr<realtime_tools::RealtimePublisher<control_msgs::JointControllerState> > controller_state_publisher_ ;
 

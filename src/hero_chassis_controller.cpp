@@ -23,8 +23,9 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
     back_right_joint_ =
       effort_joint_interface->getHandle("right_back_wheel_joint");
 
-    if (!pid_controller_.init(ros::NodeHandle(root_nh, "pid")))
-        return false;
+    for(int i = 0; i < 4; i++)
+        if (!pid_controller_[i].init(ros::NodeHandle(root_nh, "pid")))
+            return false;
 
     controller_state_publisher_.reset(
     new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>
@@ -34,38 +35,36 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
 
     return true;
 }
-void HeroChassisController::setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup){
-  pid_controller_.setGains(p,i,d,i_max,i_min,antiwindup);
+void HeroChassisController::setGains(const double &p, const double &i, const double &d, const double &i_max, const double &i_min, const bool &antiwindup, int &n){
+  pid_controller_[n].setGains(p,i,d,i_max,i_min,antiwindup);
 }
 
-void HeroChassisController::getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup){
-  pid_controller_.getGains(p,i,d,i_max,i_min,antiwindup);
+void HeroChassisController::getGains(double &p, double &i, double &d, double &i_max, double &i_min, bool &antiwindup, int &n){
+  pid_controller_[n].getGains(p,i,d,i_max,i_min,antiwindup);
 }
 
-void HeroChassisController::getGains(double &p, double &i, double &d, double &i_max, double &i_min){
+void HeroChassisController::getGains(double &p, double &i, double &d, double &i_max, double &i_min, int &n){
   bool dummy;
-  pid_controller_.getGains(p,i,d,i_max,i_min,dummy);
+  pid_controller_[n].getGains(p,i,d,i_max,i_min,dummy);
 }
 
-void HeroChassisController::printDebug(){
-  pid_controller_.printValues();
+void HeroChassisController::printDebug(int &n){
+  pid_controller_[n].printValues();
 }
 
-std::string HeroChassisController::getJointName(){
-  return joint_.getName();
+void HeroChassisController::setCommand(double cmd, int &n){
+  cmd_[n] = cmd;
 }
 
-void HeroChassisController::setCommand(double cmd){
-  cmds_ = cmd;
-}
-
-void HeroChassisController::getCommand(double& cmd){
-  cmd = cmds_;
-}
+/*void HeroChassisController::getCommand(double& cmd){
+  //正运动学回推底盘速度
+}*/
 
 void HeroChassisController::starting(const ros::Time& time){
   cmds_ = 0.0;
-  pid_controller_.reset();
+  for(int i=0; i<4; i++)
+   pid_controller_[i].reset();
+  
 }
 
 void Kinematics_Init(void){
@@ -100,10 +99,10 @@ void HeroChassisController::update(const ros::Time& time, const ros::Duration& p
     error[3] = v_w[3] - back_right_joint_.getVelocity();
 
     double commanded_effort[4];
-    commanded_effort[0] = pid_controller_.computeCommand(error[0], period);
-    commanded_effort[1] = pid_controller_.computeCommand(error[1], period);
-    commanded_effort[2] = pid_controller_.computeCommand(error[2], period);
-    commanded_effort[3] = pid_controller_.computeCommand(error[3], period);
+    commanded_effort[0] = pid_controller_fl.computeCommand(error[0], period);
+    commanded_effort[1] = pid_controller_fr.computeCommand(error[1], period);
+    commanded_effort[2] = pid_controller_bl.computeCommand(error[2], period);
+    commanded_effort[3] = pid_controller_br.computeCommand(error[3], period);
 
     front_left_joint_.setCommand(commanded_effort[0]);
     front_right_joint_.setCommand(commanded_effort[1]);
