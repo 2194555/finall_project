@@ -24,9 +24,14 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
     joint_[3]=
       effort_joint_interface->getHandle("right_back_wheel_joint");
 
-    for(int i = 0; i < 4; i++)
-        if (!pid_controller_[i].init(ros::NodeHandle(root_nh, "pid")))
-            return false;
+    if (!pid_controller_[0].init(ros::NodeHandle(root_nh, "pid_fl")))
+        return false;
+    if (!pid_controller_[1].init(ros::NodeHandle(root_nh, "pid_fr")))
+        return false;
+    if (!pid_controller_[2].init(ros::NodeHandle(root_nh, "pid_bl")))
+        return false;
+    if (!pid_controller_[3].init(ros::NodeHandle(root_nh, "pid_br")))
+        return false;
     if (!root_nh.getParam("front_left_joint_/pid/p",p[0]));
         return false;
     if (!root_nh.getParam("front_left_joint_/pid/i",i[0]));
