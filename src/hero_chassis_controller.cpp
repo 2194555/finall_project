@@ -6,7 +6,7 @@
 namespace hero_chassis_controller{
 
 HeroChassisController::HeroChassisController()
-: cmds_(0),loop_count_(0),perimeter(0),WHEEL_DIAMETER(0) {}
+: cmds_(0),loop_count_(0),perimeter(0),WHEEL_DIAMETER(0),D_X(0.4),D_Y(0.6) {}
 
 HeroChassisController::~HeroChassisController(){
     sub_command_.shutdown();
@@ -32,29 +32,29 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
         return false;
     if (!pid_controller_[3].init(ros::NodeHandle(root_nh, "pid_br")))
         return false;
-    if (!root_nh.getParam("front_left_joint_/pid/p",p[0]));
+    if (!root_nh.getParam("hero/front_left_joint_/pid/p",p[0]));
         return false;
-    if (!root_nh.getParam("front_left_joint_/pid/i",i[0]));
+    if (!root_nh.getParam("hero/front_left_joint_/pid/i",i[0]));
         return false;
-    if (!root_nh.getParam("front_left_joint_/pid/d",d[0]));
+    if (!root_nh.getParam("hero/front_left_joint_/pid/d",d[0]));
         return false;
-    if (!root_nh.getParam("front_right_joint_/pid/p",p[1]));
+    if (!root_nh.getParam("hero/front_right_joint_/pid/p",p[1]));
         return false;
-    if (!root_nh.getParam("front_right_joint_/pid/i",i[1]));
+    if (!root_nh.getParam("hero/front_right_joint_/pid/i",i[1]));
         return false;
-    if (!root_nh.getParam("front_right_joint_/pid/d",d[1]));
+    if (!root_nh.getParam("hero/front_right_joint_/pid/d",d[1]));
         return false;
-    if (!root_nh.getParam("back_left_joint_/pid/p",p[2]));
+    if (!root_nh.getParam("hero/back_left_joint_/pid/p",p[2]));
         return false;
-    if (!root_nh.getParam("back_left_joint_/pid/i",i[2]));
+    if (!root_nh.getParam("hero/back_left_joint_/pid/i",i[2]));
         return false;
-    if (!root_nh.getParam("back_left_joint_/pid/d",d[2]));
+    if (!root_nh.getParam("hero/back_left_joint_/pid/d",d[2]));
         return false;
-    if (!root_nh.getParam("back_right_joint_/pid/p",p[3]));
+    if (!root_nh.getParam("hero/back_right_joint_/pid/p",p[3]));
         return false;
-    if (!root_nh.getParam("back_right_joint_/pid/i",i[3]));
+    if (!root_nh.getParam("hero/back_right_joint_/pid/i",i[3]));
         return false;
-    if (!root_nh.getParam("back_right_joint_/pid/d",d[3]));
+    if (!root_nh.getParam("hero/back_right_joint_/pid/d",d[3]));
         return false;
     for(int j = 0; j < 4; j++){
         controller_state_publisher_[j].reset(
@@ -65,6 +65,8 @@ bool HeroChassisController::init(hardware_interface::EffortJointInterface *effor
         controller_state_publisher_[j]->msg_.d=d[j];
         controller_state_publisher_[j]->msg_.i_clamp=I_MAX;
     }
+
+    Kinematics_Init();
 
     sub_command_ = root_nh.subscribe("cmd_vel", 1, &HeroChassisController::setCmdCallback, this);
 
@@ -89,14 +91,6 @@ void HeroChassisController::printDebug(int &n){
   pid_controller_[n].printValues();
 }
 
-/*void HeroChassisController::setCmd(double cmd, int &n){
-  cmd_[n] = cmd;
-}*/
-
-/*void HeroChassisController::getCmd(double& cmd){
-  //正运动学回推底盘速度
-}*/
-
 void HeroChassisController::starting(const ros::Time& time){
   cmds_ = 0.0;
   for(int i=0; i<4; i++)
@@ -116,7 +110,6 @@ void HeroChassisController::Kinematics_Inverse(_Float32 linear_x, _Float32 linea
 	_Float32 v_tx   = linear_x;
 	_Float32 v_ty   = linear_y;
 	_Float32 omega = angular_z;
-	v_w[4] = {0};
 	
 	v_w[0] = v_tx - v_ty - xpy*omega;
 	v_w[1] = v_tx + v_ty + xpy*omega;
@@ -129,7 +122,7 @@ void HeroChassisController::setCmdCallback(geometry_msgs::Twist& cmd){
 }
 
 void HeroChassisController::update(const ros::Time& time, const ros::Duration& period){
-    double error[4] = {0};
+    double error[4] = {0}, power=1;
     error[0] = v_w[0] - joint_[0].getVelocity();
     error[1] = v_w[1] - joint_[1].getVelocity();
     error[2] = v_w[2] - joint_[2].getVelocity();
@@ -141,10 +134,10 @@ void HeroChassisController::update(const ros::Time& time, const ros::Duration& p
     commanded_effort[2] = pid_controller_[2].computeCommand(error[2], period);
     commanded_effort[3] = pid_controller_[3].computeCommand(error[3], period);
 
-    joint_[0].setCommand(commanded_effort[0]);
-    joint_[1].setCommand(commanded_effort[1]);
-    joint_[2].setCommand(commanded_effort[2]);
-    joint_[3].setCommand(commanded_effort[3]);
+    joint_[0].setCommand(power/commanded_effort[0]);
+    joint_[1].setCommand(power/commanded_effort[1]);
+    joint_[2].setCommand(power/commanded_effort[2]);
+    joint_[3].setCommand(power/commanded_effort[3]);
 
     if(loop_count_ % 10 == 0){
         for(int n=0; n<4; n++){

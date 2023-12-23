@@ -1,0 +1,24 @@
+<launch>
+    <include file="$(find rm_description)/launch/hero.launch">
+        <arg name="load_chassis" value="true"/>
+        <arg name="roller_type" value="realistic"/>
+        <arg name="paused" value="true"/>
+    </include>
+  
+  
+    <rosparam file="$(find hero_chassis_controller)/config/hero.yaml" command="load"/>
+
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/hero" args="
+        hero/hero_chassis_controller
+        hero/joint_state_controller
+        hero/front_left_joint_
+        hero/front_right_joint_
+        hero/back_left_joint_
+        hero/back_right_joint_
+        "/>
+
+    
+    </node>
+
+</launch>

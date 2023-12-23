@@ -1,0 +1,35 @@
+hero:
+  hero_chassis_controller:
+    type: hero_chassis_controller/HeroChassisController
+
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  front_left_joint_:
+    type: effort_controller/JointEffortController
+    pid: 
+      p: 100.0
+      i: 0.001
+      d: 10.0
+
+  front_right_joint_:
+    type: effort_controller/JointEffortController
+    pid: 
+      p: 100.0
+      i: 0.001
+      d: 10.0
+
+  back_left_joint_:
+    type: effort_controller/JointEffortController
+    pid: 
+      p: 100.0
+      i: 0.001
+      d: 10.0
+
+  back_right_joint_:
+    type: effort_controller/JointEffortController
+    pid: 
+      p: 100.0
+      i: 0.001
+      d: 10.0
